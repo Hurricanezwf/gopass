@@ -3,8 +3,9 @@ package main
 import "github.com/Hurricanezwf/gopass/ui"
 
 func main() {
-	ui.Init()
+	ui := ui.New()
 	defer ui.Close()
 
-	ui.DrawAll(nil)
+	eb := ui.EditBox()
+	eb.Show()
 }
