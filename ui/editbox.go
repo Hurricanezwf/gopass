@@ -56,8 +56,11 @@ import (
 //}
 
 type EditBoxConfig struct {
-	// 编辑框距离页面顶端的百分比,取值[0,1], 默认25%
-	boxTopMargin float64
+	// 编辑框距离页面顶端的距离
+	boxTopMargin int
+
+	// 编辑框距离页面左边的距离
+	boxLeftMargin int
 
 	// 编辑框长度, 默认30px
 	boxSpan int
@@ -67,15 +70,21 @@ type EditBoxConfig struct {
 }
 
 func DefaultEditBoxConfig() *EditBoxConfig {
-	return &EditBoxConfig{
-		boxTopMargin: 0.25,
-		boxSpan:      30,
-		boxColor:     termbox.ColorDefault,
+	eb := &EditBoxConfig{
+		boxTopMargin:  0,
+		boxLeftMargin: 0,
+		boxSpan:       50,
+		boxColor:      termbox.ColorDefault,
 	}
+
+	w, h := termbox.Size()
+	eb.boxTopMargin = int(0.3 * float64(h))
+	eb.boxLeftMargin = (w - eb.boxSpan) / 2
+	return eb
 }
 
 type EditBox struct {
-	// 如果cfg为nil, 将使用默认配置
+	// 如果conf为nil, 将使用默认配置
 	Conf *EditBoxConfig
 
 	// 编辑框内容
@@ -92,27 +101,15 @@ func NewEditBox() *EditBox {
 	}
 }
 
-//func (eb *EditBox) SetConf(conf *EditBoxConfig) *EditBox {
-//	if conf != nil {
-//		eb.Conf = conf
-//	}
-//	return eb
-//}
-
 func (eb *EditBox) Show() {
 	var (
-		color        = eb.Conf.boxColor
-		boxSpan      = eb.Conf.boxSpan
-		boxTopMargin = eb.Conf.boxTopMargin
+		color   = eb.Conf.boxColor
+		boxX    = eb.Conf.boxLeftMargin
+		boxY    = eb.Conf.boxTopMargin
+		boxSpan = eb.Conf.boxSpan
 	)
 
-	// reset color
-	termbox.Clear(color, color)
-
 	// show edit box
-	w, h := termbox.Size()
-	boxX := (w - boxSpan) / 2
-	boxY := int(boxTopMargin * float64(h))
 	termbox.SetCell(boxX-1, boxY-1, '┌', color, color)
 	termbox.SetCell(boxX-1, boxY, '│', color, color)
 	termbox.SetCell(boxX-1, boxY+1, '└', color, color)
@@ -123,7 +120,7 @@ func (eb *EditBox) Show() {
 	Fill(boxX, boxY+1, boxSpan, 1, termbox.Cell{Ch: '─'})
 
 	TBPrint(boxX, boxY, color, color, "→")
-	TBPrint(boxX+6, boxY-3, color, color, "Press ESC to quit")
+	TBPrint(boxX+16, boxY-3, color, color, "Press ESC to quit")
 	termbox.SetCursor(boxX+2, boxY)
 
 	termbox.Flush()
@@ -131,36 +128,50 @@ func (eb *EditBox) Show() {
 	// cache
 	eb.boxX = boxX
 	eb.boxY = boxY
-
-	eb.watch()
 }
 
-func (eb *EditBox) watch() {
-	for {
-		switch ev := termbox.PollEvent(); ev.Type {
-		case termbox.EventKey:
-			switch ev.Key {
-			case termbox.KeyEsc:
-				return
-			default:
-				if ev.Ch != 0 {
-					eb.insertRune(ev.Ch)
-				}
-			}
-		case termbox.EventError:
-			panic(ev.Err)
-		}
-	}
-}
+//func (eb *EditBox) watch() {
+//	for {
+//		switch ev := termbox.PollEvent(); ev.Type {
+//		case termbox.EventKey:
+//			log.Debug("EditBox receive key %d\n", ev.Key)
+//			switch ev.Key {
+//			case termbox.KeyEsc:
+//				return
+//			case termbox.KeyBackspace2:
+//				eb.KeyBackspace2Handler()
+//			case termbox.KeyBackspace:
+//				eb.KeyBackspaceHandler()
+//			case termbox.KeyCtrlQ:
+//				eb.KeyCtrlQHandler()
+//			case termbox.KeySpace:
+//				eb.insertRune(' ')
+//			default:
+//				if ev.Ch != 0 {
+//					eb.insertRune(ev.Ch)
+//				}
+//			}
+//		case termbox.EventError:
+//			panic(ev.Err)
+//		}
+//	}
+//}
 
-func (eb *EditBox) insertRune(r rune) {
+func (eb *EditBox) InsertRune(r rune) {
 	b := make([]byte, utf8.RuneLen(r))
 	utf8.EncodeRune(b, r)
 	eb.text = ByteSliceInsert(eb.text, len(eb.text), b)
-	eb.flushText()
+	eb.flush()
 }
 
-func (eb *EditBox) flushText() {
+func (eb *EditBox) DeleteRune() {
+	if len(eb.text) > 0 {
+		eb.text = eb.text[:len(eb.text)-1]
+	}
+	eb.flush()
+}
+
+func (eb *EditBox) flush() {
 	var (
 		txt   []byte
 		boxX  = eb.boxX
@@ -175,9 +186,34 @@ func (eb *EditBox) flushText() {
 	} else {
 		txt = eb.text[len(eb.text)-span:]
 	}
+	eb.clear()
 	TBPrint(boxX+space, boxY, color, color, string(txt))
 	termbox.SetCursor(boxX+space+len(txt), boxY)
 	termbox.Flush()
+}
+
+func (eb *EditBox) clear() {
+	var (
+		boxX = eb.boxX
+		boxY = eb.boxY
+		span = eb.Conf.boxSpan - 1
+	)
+	Fill(boxX+1, boxY, span, 1, termbox.Cell{Ch: ' '})
+}
+
+func (eb *EditBox) KeyBackspaceHandler() error {
+	return eb.KeyBackspace2Handler()
+}
+
+func (eb *EditBox) KeyBackspace2Handler() error {
+	eb.DeleteRune()
+	return nil
+}
+
+func (eb *EditBox) KeyCtrlQHandler() error {
+	eb.text = eb.text[:0]
+	eb.flush()
+	return nil
 }
 
 //const preferred_horizontal_threshold = 5

@@ -1,41 +1,88 @@
 package ui
 
 import (
+	"github.com/Hurricanezwf/gopass/log"
 	termbox "github.com/nsf/termbox-go"
 )
+
+func Open() {
+	var err error
+
+	if err = termbox.Init(); err != nil {
+		panic(err)
+	}
+	defer termbox.Close()
+
+	editBox := NewEditBox()
+	listBox := NewListBox()
+
+	editBox.Show()
+	listBox.Show()
+	termbox.Flush()
+
+	// watch event
+	for {
+		switch ev := termbox.PollEvent(); ev.Type {
+		case termbox.EventKey:
+			log.Debug("Receive key %d\n", ev.Key)
+			switch ev.Key {
+			case termbox.KeyEsc:
+				return
+			case termbox.KeyBackspace2:
+				editBox.KeyBackspace2Handler()
+			case termbox.KeyBackspace:
+				editBox.KeyBackspaceHandler()
+			case termbox.KeyCtrlQ:
+				editBox.KeyCtrlQHandler()
+			case termbox.KeySpace:
+				editBox.InsertRune(' ')
+			default:
+				if ev.Ch != 0 {
+					editBox.InsertRune(ev.Ch)
+				}
+			}
+		case termbox.EventError:
+			panic(ev.Err)
+		}
+	}
+}
 
 //const (
 //	boxSpan      = 30   // 编辑框的长度,单位cell
 //	boxTopMargin = 0.25 // 编辑框距离顶端的百分比
 //)
 
-var (
-	refCount int
-)
-
-type UI struct{}
-
-func New() *UI {
-	if refCount <= 0 {
-		if err := termbox.Init(); err != nil {
-			return nil
-		}
-		termbox.SetInputMode(termbox.InputEsc)
-	}
-	refCount++
-	return &UI{}
-}
-
-func (u *UI) Close() {
-	refCount--
-	if refCount <= 0 {
-		termbox.Close()
-	}
-}
-
-func (u *UI) EditBox() *EditBox {
-	return NewEditBox()
-}
+//var (
+//	refCount int
+//)
+//
+//type UI struct{}
+//
+//func New() *UI {
+//	if refCount <= 0 {
+//		if err := termbox.Init(); err != nil {
+//			return nil
+//		}
+//		//termbox.SetInputMode(termbox.InputEsc)
+//	}
+//	refCount++
+//	return &UI{}
+//}
+//
+//func (u *UI) Close() {
+//	refCount--
+//	if refCount <= 0 {
+//		termbox.Close()
+//	}
+//}
+//
+//func (u *UI) EditBox() *EditBox {
+//	return NewEditBox()
+//}
+//
+//func (u *UI) ListBox() *ListBox {
+//	return NewListBox()
+//}
 
 //func DrawSearchBox(l []string) error {
 //	if isInit == false {

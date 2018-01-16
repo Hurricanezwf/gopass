@@ -5,16 +5,6 @@ import (
 	termbox "github.com/nsf/termbox-go"
 )
 
-//
-//func byte_slice_grow(s []byte, desired_cap int) []byte {
-//	if cap(s) < desired_cap {
-//		ns := make([]byte, len(s), desired_cap)
-//		copy(ns, s)
-//		return ns
-//	}
-//	return s
-//}
-
 func ByteSliceInsert(text []byte, offset int, what []byte) []byte {
 	n := len(text) + len(what)
 	text = ByteSliceGrow(text, n)
