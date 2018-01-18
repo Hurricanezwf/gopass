@@ -32,10 +32,16 @@ func Open() {
 				editBox.KeyBackspace2Handler()
 			case termbox.KeyBackspace:
 				editBox.KeyBackspaceHandler()
+			case termbox.KeyArrowUp:
+				listBox.KeyArrowUpHandler()
+			case termbox.KeyArrowDown:
+				listBox.KeyArrowDownHandler()
 			case termbox.KeyCtrlQ:
 				editBox.KeyCtrlQHandler()
 			case termbox.KeySpace:
 				editBox.InsertRune(' ')
+			case termbox.KeyEnter:
+				listBox.KeyEnterHandler()
 			default:
 				if ev.Ch != 0 {
 					editBox.InsertRune(ev.Ch)
