@@ -4,12 +4,7 @@ var (
 	l *Logger
 )
 
-func init() {
-	conf := DefaultLogConf()
-	conf.SetLogLevel("debug")
-	conf.SetLogWay(LogWayFile)
-	conf.SetLogFile("./gopass.log")
-
+func Init(conf *LogConf) {
 	l = NewLogger().Apply(conf)
 }
 
