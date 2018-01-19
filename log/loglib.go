@@ -92,7 +92,7 @@ type Logger struct {
 func NewLogger() *Logger {
 	logger := logs.NewLogger(1000)
 	logger.EnableFuncCallDepth(true)
-	logger.SetLogFuncCallDepth(3)
+	logger.SetLogFuncCallDepth(4)
 
 	return &Logger{
 		log: logger,

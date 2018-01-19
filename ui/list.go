@@ -2,9 +2,11 @@ package ui
 
 import (
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/Hurricanezwf/gopass/log"
+	"github.com/atotto/clipboard"
 	termbox "github.com/nsf/termbox-go"
 )
 
@@ -15,9 +17,9 @@ type ListBoxConfig struct {
 	// 列表距离页面左侧的距离
 	boxLeftMargin int
 
-	// 列表宽度, 默认30px
+	// 列表宽度, 默认50px
 	boxSpanX int
-	// 列表高度, 默认60px
+	// 列表高度, 默认20px
 	boxSpanY int
 
 	// 列表选中的颜色
@@ -47,23 +49,119 @@ type ListBox struct {
 	// 如果conf为nil, 将使用默认配置
 	Conf *ListBoxConfig
 
+	ui *UI
+
 	// 数据列表
-	data       []string
+	dataAll    []string
+	dataDraw   []string
 	curPageIdx int
 	curDataIdx int
+
+	// 控制列表匹配输入框内容,输入框内容发生改变，即向channel写
+	matchC chan struct{}
 }
 
 func NewListBox() *ListBox {
 	return &ListBox{
 		Conf:       DefaultListBoxConfig(),
-		data:       make([]string, 12),
 		curPageIdx: 0,
 		curDataIdx: 0,
+		matchC:     make(chan struct{}, 100),
 	}
 }
 
-func (lb *ListBox) Show() {
+func (lb *ListBox) Open(ui *UI) {
+	lb.ui = ui
+
+	// TODO: send request to backend to fetch all
+	if lb.dataAll == nil {
+		lb.dataAll = make([]string, 12)
+	}
+	lb.dataAll[0] = "P0"
+	lb.dataAll[1] = "P1"
+	lb.dataAll[2] = "P2"
+	lb.dataAll[3] = "P3"
+	lb.dataAll[4] = "P4"
+	lb.dataAll[5] = "P5"
+	lb.dataAll[6] = "P6"
+	lb.dataAll[7] = "P7"
+	lb.dataAll[8] = "P8"
+	lb.dataAll[9] = "P9"
+	lb.dataAll[10] = "P10"
+	lb.dataAll[11] = "P11"
+
+	lb.dataDraw = lb.dataAll[:]
+
+	// TODO: create goroutine to listen key event, then regrex
+	go lb.match()
+
 	lb.draw(0)
+}
+
+func (lb *ListBox) Close() {
+	close(lb.matchC)
+	lb.matchC = nil
+}
+
+// NotifyMatch: 告知ListBox编辑框的内容发生改变
+func (lb *ListBox) NotifyMatch() {
+	if lb.matchC == nil {
+		return
+	}
+	select {
+	case lb.matchC <- struct{}{}:
+	default:
+		log.Warn("Match channel is full")
+	}
+}
+
+func (lb *ListBox) match() {
+	var (
+		changed bool
+		ticker  = time.NewTicker(100 * time.Millisecond)
+	)
+
+	for {
+		select {
+		case _, ok := <-lb.matchC:
+			if !ok {
+				return
+			}
+			changed = true
+		case <-ticker.C:
+			if !changed {
+				continue
+			}
+
+			changed = false
+			v := lb.ui.EditBox.Value()
+			lb.filter(string(v))
+			lb.draw(0)
+			//log.Debug("%s", string(v))
+		}
+	}
+}
+
+func (lb *ListBox) filter(key string) {
+	if len(key) <= 0 {
+		lb.dataDraw = lb.dataAll[:]
+		return
+	}
+
+	pattern := fmt.Sprintf("(?i)%s", key)
+	dataDraw := make([]string, 0)
+	for _, d := range lb.dataAll {
+		ok, err := regexp.MatchString(pattern, d)
+		if err != nil {
+			log.Warn("%d match pattern(%s) failed", d, pattern)
+			continue
+		}
+		if ok {
+			dataDraw = append(dataDraw, d)
+		}
+	}
+	lb.dataDraw = dataDraw
+	log.Debug("After filter, dataDraw size:%d", len(dataDraw))
 }
 
 func (lb *ListBox) draw(pageNo int) {
@@ -78,18 +176,21 @@ func (lb *ListBox) draw(pageNo int) {
 		//boxSpanY = lb.Conf.boxSpanY
 	)
 
-	lb.data[0] = "VPN密码"
-	lb.data[1] = "Bak00密码"
-	lb.data[2] = "sdjfkldsjkfjsdkfjsdkjfklsdjfksdjfksjdklfjskldjfksdjfksjdklfjskldjfklsdjfjsdklfj"
-	lb.data[3] = "测试密码3"
-	lb.data[4] = "测试密码4"
-	lb.data[5] = "测试密码5"
-	lb.data[6] = "测试密码6"
-	lb.data[7] = "测试密码7"
-	lb.data[8] = "测试密码8"
-	lb.data[9] = "测试密码9"
-	lb.data[10] = "测试密码10"
-	lb.data[11] = "测试密码11"
+	/*
+		lb.data[0] = "VPN密码"
+		lb.data[1] = "Bak00密码"
+		lb.data[2] = "sdjfkldsjkfjsdkfjsdkjfklsdjfksdjfksjdklfjskldjfksdjfksjdklfjskldjfklsdjfjsdklfj"
+		lb.data[3] = "测试密码3"
+		lb.data[4] = "测试密码4"
+		lb.data[5] = "测试密码5"
+		lb.data[6] = "测试密码6"
+		lb.data[7] = "测试密码7"
+		lb.data[8] = "测试密码8"
+		lb.data[9] = "测试密码9"
+		lb.data[10] = "测试密码10"
+		lb.data[11] = "测试密码11"
+	*/
+	lb.Clear()
 
 	pageStart, pageEnd, pageCount, err := lb.calcPageIdx(pageNo)
 	if err != nil {
@@ -98,14 +199,12 @@ func (lb *ListBox) draw(pageNo int) {
 	}
 	log.Debug("pageCount=%d, pageStart=%d, pageEnd=%d", pageCount, pageStart, pageEnd)
 
-	lb.Clear()
-
 	for i := pageStart; i <= pageEnd; i++ {
 		tmpCount++
 
-		data := lb.data[i]
-		if len(data) > boxSpanX-3 {
-			data = data[:boxSpanX-3]
+		data := lb.dataDraw[i]
+		if len(data) > boxSpanX-4 {
+			data = data[:boxSpanX-4]
 		}
 
 		if i == lb.curDataIdx {
@@ -142,7 +241,7 @@ func (lb *ListBox) KeyArrowUpHandler() error {
 	)
 
 	if dataIdx < 0 {
-		dataIdx = len(lb.data) - 1
+		dataIdx = len(lb.dataDraw) - 1
 	}
 
 	// 最多跨一页搜索
@@ -177,7 +276,7 @@ func (lb *ListBox) KeyArrowDownHandler() error {
 		pageEnd   = 0
 	)
 
-	if dataIdx >= len(lb.data) {
+	if dataIdx >= len(lb.dataDraw) {
 		dataIdx = 0
 	}
 
@@ -203,9 +302,15 @@ func (lb *ListBox) KeyArrowDownHandler() error {
 	return nil
 }
 
+// xsel or xclip will be needed
 func (lb *ListBox) KeyEnterHandler() error {
-	notify := NewNotify("Copy OK", time.Second)
-	notify.Info()
+	key := lb.dataDraw[lb.curDataIdx]
+	if err := clipboard.WriteAll(key); err != nil {
+		log.Warn("Copy to clipboard failed, %v", err)
+		NewNotify("Copy Failed", time.Second).Warn()
+		return err
+	}
+	NewNotify("Copy OK", time.Second).Info()
 	return nil
 }
 
@@ -213,7 +318,7 @@ func (lb *ListBox) calcPageCount() int {
 	var (
 		pageCount   = 0
 		pageDataNum = lb.Conf.pageDataNum
-		dataCount   = len(lb.data)
+		dataCount   = len(lb.dataDraw)
 	)
 
 	if dataCount%pageDataNum > 0 {
@@ -235,7 +340,7 @@ func (lb *ListBox) calcPageIdx(pageNo int) (pageStart, pageEnd, pageCount int, e
 
 	pageStart = pageNo * pageCount
 	pageEnd = pageStart + pageSize - 1
-	dataCount = len(lb.data)
+	dataCount = len(lb.dataDraw)
 	if pageStart >= dataCount {
 		return 0, 0, 0, fmt.Errorf("PageStart(%d) >= DataCount(%d)", pageStart, dataCount)
 	}

@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"bytes"
+	"fmt"
 	"unicode/utf8"
 
 	"github.com/nsf/termbox-go"
@@ -87,6 +89,8 @@ type EditBox struct {
 	// 如果conf为nil, 将使用默认配置
 	Conf *EditBoxConfig
 
+	ui *UI
+
 	// 编辑框内容
 	text []byte
 
@@ -101,7 +105,7 @@ func NewEditBox() *EditBox {
 	}
 }
 
-func (eb *EditBox) Show() {
+func (eb *EditBox) Open(ui *UI) {
 	var (
 		color   = eb.Conf.boxColor
 		boxX    = eb.Conf.boxLeftMargin
@@ -128,6 +132,13 @@ func (eb *EditBox) Show() {
 	// cache
 	eb.boxX = boxX
 	eb.boxY = boxY
+	eb.ui = ui
+}
+
+func (eb *EditBox) Value() []byte {
+	buf := bytes.NewBuffer(nil)
+	buf.Write(eb.text)
+	return buf.Bytes()
 }
 
 //func (eb *EditBox) watch() {
@@ -207,12 +218,26 @@ func (eb *EditBox) KeyBackspaceHandler() error {
 
 func (eb *EditBox) KeyBackspace2Handler() error {
 	eb.DeleteRune()
+	eb.ui.ListBox.NotifyMatch()
 	return nil
 }
 
 func (eb *EditBox) KeyCtrlQHandler() error {
 	eb.text = eb.text[:0]
 	eb.flush()
+	return nil
+}
+
+func (eb *EditBox) DefaultHandler(ch rune) error {
+	if ch == 0 {
+		return fmt.Errorf("Empty rune")
+	}
+
+	var listBox = eb.ui.ListBox
+
+	eb.InsertRune(ch)
+	listBox.NotifyMatch()
+
 	return nil
 }
 

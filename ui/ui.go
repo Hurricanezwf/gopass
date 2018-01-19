@@ -6,18 +6,35 @@ import (
 )
 
 func Open() {
-	var err error
-
-	if err = termbox.Init(); err != nil {
+	if err := termbox.Init(); err != nil {
 		panic(err)
 	}
 	defer termbox.Close()
 
-	editBox := NewEditBox()
-	listBox := NewListBox()
+	NewUI().Open()
+}
 
-	editBox.Show()
-	listBox.Show()
+type UI struct {
+	EditBox *EditBox
+	ListBox *ListBox
+}
+
+func NewUI() *UI {
+	return &UI{
+		EditBox: NewEditBox(),
+		ListBox: NewListBox(),
+	}
+}
+
+func (ui *UI) Open() {
+	var (
+		editBox = ui.EditBox
+		listBox = ui.ListBox
+	)
+
+	editBox.Open(ui)
+	listBox.Open(ui)
+	defer listBox.Close()
 	termbox.Flush()
 
 	// watch event
@@ -43,9 +60,7 @@ func Open() {
 			case termbox.KeyEnter:
 				listBox.KeyEnterHandler()
 			default:
-				if ev.Ch != 0 {
-					editBox.InsertRune(ev.Ch)
-				}
+				editBox.DefaultHandler(ev.Ch)
 			}
 		case termbox.EventError:
 			panic(ev.Err)
