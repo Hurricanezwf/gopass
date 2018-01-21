@@ -9,6 +9,12 @@
 			"revisionTime": "2017-12-29T22:41:53Z"
 		},
 		{
+			"checksumSHA1": "cJE7dphDlam/i7PhnsyosNWtbd4=",
+			"path": "github.com/mattn/go-runewidth",
+			"revision": "97311d9f7767e3d6f422ea06661bc2c7a19e8a5d",
+			"revisionTime": "2017-05-10T07:48:58Z"
+		},
+		{
 			"checksumSHA1": "5Jd0+a1X5Nvhhw8VfSUD9i1WyP0=",
 			"path": "github.com/nsf/termbox-go",
 			"revision": "aa4a75b1c20a2b03751b1a9f7e41d58bd6f71c43",
