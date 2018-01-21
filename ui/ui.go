@@ -1,17 +1,23 @@
 package ui
 
 import (
+	"fmt"
+
 	"github.com/Hurricanezwf/gopass/log"
 	termbox "github.com/nsf/termbox-go"
 )
 
-func Open() {
+func Open() error {
 	if err := termbox.Init(); err != nil {
-		panic(err)
+		return fmt.Errorf("Init UI failed, %v", err)
 	}
-	defer termbox.Close()
-
 	NewUI().Open()
+	return nil
+}
+
+func Close() error {
+	termbox.Close()
+	return nil
 }
 
 type UI struct {
