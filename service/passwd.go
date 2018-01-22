@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/Hurricanezwf/gopass/utils"
 	"github.com/boltdb/bolt"
 )
 
@@ -18,14 +19,14 @@ var (
 	defaultBucket = []byte("gopass")
 )
 
-type Passwd struct {
+type PasswdSVC struct {
 	// 元数据存储文件
 	metaFile string
 
 	db *bolt.DB
 }
 
-func (p *Passwd) Open(metaFile string) error {
+func (p *PasswdSVC) Open(metaFile string) error {
 	if len(metaFile) <= 0 {
 		return errors.New("Empty metafile")
 	}
@@ -43,24 +44,26 @@ func (p *Passwd) Open(metaFile string) error {
 	return nil
 }
 
-func (p *Passwd) Close() error {
+func (p *PasswdSVC) Close() error {
 	return p.db.Close()
 }
 
 // 密码加密后存储
-func (p *Passwd) Add(key, password []byte) error {
-	if p.Exist(key) {
+func (p *PasswdSVC) Add(key, password []byte) error {
+	// TODO: 加密方式可选，保存加密种类
+	k := utils.Encrypt(key)
+	pw := utils.Encrypt(password)
+
+	if p.Exist(k) {
 		return fmt.Errorf("Key(%s) had been existed", key)
 	}
-
-	// TODO: 加密
 
 	err := p.db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists(defaultBucket)
 		if err != nil {
 			return err
 		}
-		if err = b.Put(key, password); err != nil {
+		if err = b.Put(k, pw); err != nil {
 			return err
 		}
 		return nil
@@ -76,7 +79,7 @@ func (p *Passwd) Add(key, password []byte) error {
 }
 
 // 解密后返回
-func (p *Passwd) Get(key []byte) ([]byte, error) {
+func (p *PasswdSVC) Get(key []byte) ([]byte, error) {
 	var v []byte
 	err := p.db.View(func(tx *bolt.Tx) error {
 		v = tx.Bucket(defaultBucket).Get(key)
@@ -94,7 +97,7 @@ func (p *Passwd) Get(key []byte) ([]byte, error) {
 	return v, nil
 }
 
-func (p *Passwd) Update(key, password []byte) error {
+func (p *PasswdSVC) Update(key, password []byte) error {
 	if !p.Exist(key) {
 		return fmt.Errorf("Password for key(%s) is not existed", key)
 	}
@@ -121,10 +124,13 @@ func (p *Passwd) Update(key, password []byte) error {
 	return nil
 }
 
-func (p *Passwd) Exist(key []byte) bool {
+func (p *PasswdSVC) Exist(key []byte) bool {
 	if err := p.db.View(func(tx *bolt.Tx) error {
-		v := tx.Bucket(defaultBucket).Get(key)
-		if len(v) <= 0 {
+		b := tx.Bucket(defaultBucket)
+		if b == nil {
+			return ErrNotExist
+		}
+		if v := b.Get(key); len(v) <= 0 {
 			return ErrNotExist
 		}
 		return nil

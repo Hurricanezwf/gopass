@@ -19,6 +19,12 @@
 			"path": "github.com/nsf/termbox-go",
 			"revision": "aa4a75b1c20a2b03751b1a9f7e41d58bd6f71c43",
 			"revisionTime": "2017-11-04T16:23:16Z"
+		},
+		{
+			"checksumSHA1": "4c8aIV5NI4wA55OW0wCt/1S/3Nw=",
+			"path": "gopkg.in/urfave/cli.v2",
+			"revision": "b2bf3c5abeb90da407891aecd1df2c5a1f6170c1",
+			"revisionTime": "2017-09-28T22:42:40Z"
 		}
 	],
 	"rootPath": "github.com/Hurricanezwf/gopass"

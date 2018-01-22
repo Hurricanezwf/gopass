@@ -9,17 +9,17 @@ var (
 )
 
 var (
-	passwd *Passwd
+	Passwd *PasswdSVC
 )
 
 func Open() error {
-	if passwd == nil {
-		passwd = &Passwd{}
+	if Passwd == nil {
+		Passwd = &PasswdSVC{}
 	}
 
 	var err error
-	if err = passwd.Open(MetaFile); err != nil {
-		log.Error("Open passwd failed, %v", err)
+	if err = Passwd.Open(MetaFile); err != nil {
+		log.Error("Open passwd service failed, %v", err)
 		return err
 	}
 
@@ -27,9 +27,9 @@ func Open() error {
 }
 
 func Close() error {
-	if passwd != nil {
-		passwd.Close()
-		passwd = nil
+	if Passwd != nil {
+		Passwd.Close()
+		Passwd = nil
 	}
 	return nil
 }

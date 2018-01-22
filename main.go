@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 
@@ -12,60 +11,85 @@ import (
 )
 
 var (
-	logFile string
+	logFile string = "./gopass.log"
 )
 
 // Command list
 const (
-	ADD = "add"
-	GET = "get"
-	DEL = "del"
+	ADD  = "add"
+	GET  = "get"
+	DEL  = "del"
+	HELP = "help"
 )
 
-func init() {
-	flag.StringVar(&logFile, "l", "./gopass", "-l logfile")
-	flag.Parse()
-	initLog()
-}
+//func init() {
+//	flag.StringVar(&logFile, "l", "./gopass.log", "-l logfile")
+//	flag.Parse()
+//	initLog()
+//}
 
 func main() {
 	app := &cli.App{
-		Version:   "0.0.1",
-		Name:      "gopass",
-		UsageText: "gopass [add|del]",
-		Commands:  make([]*cli.Command, 3),
-	}
-	app.Commands[0] = &cli.Command{
-		Name:      ADD,
-		Usage:     "save password",
-		UsageText: "gopass add [key] [password]",
-		Action:    AddAction,
-	}
-	app.Commands[1] = &cli.Command{
-		Name:   DEL,
-		Action: DelAction,
-	}
-	app.Commands[2] = &cli.Command{
-		Name:   GET,
-		Action: GetAction,
+		Version:     "0.0.1",
+		Name:        "gopass",
+		UsageText:   "gopass [add|del]",
+		HideVersion: true,
+		HideHelp:    true,
+		Flags: []cli.Flag{
+			&cli.BoolFlag{Name: "h", Usage: "show help", Hidden: true},
+		},
+		Commands: []*cli.Command{
+			// add password
+			&cli.Command{
+				Name:      ADD,
+				Usage:     "add password to manager",
+				UsageText: "gopass add [key] [password]",
+				Action:    AddAction,
+			},
+			// del password
+			&cli.Command{
+				Name:   DEL,
+				Action: DelAction,
+			},
+			// get password
+			&cli.Command{
+				Name:   GET,
+				Action: GetAction,
+			},
+			// show help
+			&cli.Command{
+				Name:   HELP,
+				Action: HelpAction,
+			},
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		panic(err)
+		fmt.Printf("\033[33m%v\033[0m\n", err)
 	}
 }
 
 func AddAction(c *cli.Context) error {
-	fmt.Printf("Add action\n")
+	var (
+		err  error
+		args []string
+	)
 
-	args := c.Args().Slice()
-	for i, a := range args {
-		fmt.Printf("[%d] %s\n", i, a)
-	}
-
-	if c.Args().Len() != 2 {
+	if args = c.Args().Slice(); len(args) != 2 {
 		cli.ShowCommandHelp(c, ADD)
+		return nil
 	}
+
+	if err = service.Open(); err != nil {
+		return fmt.Errorf("Open service failed, %v", err)
+	}
+	defer service.Close()
+
+	if err = service.Passwd.Add([]byte(args[0]), []byte(args[1])); err != nil {
+		return fmt.Errorf("Add password failed, %v", err)
+	}
+
+	fmt.Printf("\033[32mAdd OK\033[0m\n")
 	return nil
 }
 
@@ -86,6 +110,11 @@ func GetAction(c *cli.Context) error {
 	}
 	defer ui.Close()
 
+	return nil
+}
+
+func HelpAction(c *cli.Context) error {
+	cli.ShowAppHelp(c)
 	return nil
 }
 
