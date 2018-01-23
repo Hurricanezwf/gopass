@@ -82,8 +82,11 @@ func (p *PasswdSVC) Add(key, password []byte) error {
 func (p *PasswdSVC) Get(key []byte) ([]byte, error) {
 	var v []byte
 	err := p.db.View(func(tx *bolt.Tx) error {
-		v = tx.Bucket(defaultBucket).Get(key)
-		if len(v) <= 0 {
+		b := tx.Bucket(defaultBucket)
+		if b == nil {
+			return ErrNotExist
+		}
+		if v = b.Get(key); len(v) <= 0 {
 			return ErrNotExist
 		}
 		return nil
@@ -97,19 +100,69 @@ func (p *PasswdSVC) Get(key []byte) ([]byte, error) {
 	return v, nil
 }
 
-func (p *PasswdSVC) Update(key, password []byte) error {
-	if !p.Exist(key) {
-		return fmt.Errorf("Password for key(%s) is not existed", key)
+func (p *PasswdSVC) ListKeys() ([]string, error) {
+	keys := make([]string, 0)
+	if err := p.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(defaultBucket)
+		if b != nil {
+			err := b.ForEach(func(k, v []byte) error {
+				if dk, e := utils.Decrypt(k); e == nil && len(dk) > 0 {
+					keys = append(keys, string(dk))
+				}
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}); err != nil {
+		return nil, err
 	}
+	return keys, nil
+}
 
-	// TODO: 加密
+func (p *PasswdSVC) Update(key, new []byte) error {
+	k := utils.Encrypt(key)
+	newpw := utils.Encrypt(new)
+
+	if !p.Exist(k) {
+		return fmt.Errorf("Key(%s) doesn't exist", key)
+	}
 
 	err := p.db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists(defaultBucket)
 		if err != nil {
 			return err
 		}
-		if err = b.Put(key, password); err != nil {
+		if err = b.Put(k, newpw); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	if err = p.db.Sync(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *PasswdSVC) Del(key []byte) error {
+	k := utils.Encrypt(key)
+
+	if !p.Exist(k) {
+		return fmt.Errorf("Key(%s) doesn't exist", key)
+	}
+
+	err := p.db.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists(defaultBucket)
+		if err != nil {
+			return err
+		}
+		if err = b.Delete(key); err != nil {
 			return err
 		}
 		return nil

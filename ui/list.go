@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Hurricanezwf/gopass/log"
+	"github.com/Hurricanezwf/gopass/service"
 	"github.com/atotto/clipboard"
 	termbox "github.com/nsf/termbox-go"
 )
@@ -71,28 +72,40 @@ func NewListBox() *ListBox {
 }
 
 func (lb *ListBox) Open(ui *UI) {
-	lb.ui = ui
+	var (
+		err  error
+		keys []string
+	)
 
-	// TODO: send request to backend to fetch all
-	if lb.dataAll == nil {
-		lb.dataAll = make([]string, 12)
+	if keys, err = service.ListKeys(); err != nil {
+		log.Warn("Service list keys failed, %v", err)
+		return
 	}
-	lb.dataAll[0] = "P0"
-	lb.dataAll[1] = "P1"
-	lb.dataAll[2] = "P2"
-	lb.dataAll[3] = "P3"
-	lb.dataAll[4] = "P4"
-	lb.dataAll[5] = "P5"
-	lb.dataAll[6] = "P6"
-	lb.dataAll[7] = "P7"
-	lb.dataAll[8] = "P8"
-	lb.dataAll[9] = "P9"
-	lb.dataAll[10] = "P10"
-	lb.dataAll[11] = "P11"
+	defer service.CloseAll()
 
+	/*
+		if lb.dataAll == nil {
+			lb.dataAll = make([]string, 12)
+		}
+		lb.dataAll[0] = "P0"
+		lb.dataAll[1] = "P1"
+		lb.dataAll[2] = "P2"
+		lb.dataAll[3] = "P3"
+		lb.dataAll[4] = "P4"
+		lb.dataAll[5] = "P5"
+		lb.dataAll[6] = "P6"
+		lb.dataAll[7] = "P7"
+		lb.dataAll[8] = "P8"
+		lb.dataAll[9] = "P9"
+		lb.dataAll[10] = "P10"
+		lb.dataAll[11] = "P11"
+	*/
+
+	lb.ui = ui
+	lb.dataAll = keys
 	lb.dataDraw = lb.dataAll[:]
 
-	// TODO: create goroutine to listen key event, then regrex
+	// listen keys search
 	go lb.match()
 
 	lb.draw(0)
