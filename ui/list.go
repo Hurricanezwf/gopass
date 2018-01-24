@@ -53,8 +53,8 @@ type ListBox struct {
 	ui *UI
 
 	// 数据列表
-	dataAll    []string
-	dataDraw   []string
+	dataAll    [][]byte
+	dataDraw   [][]byte
 	curPageIdx int
 	curDataIdx int
 
@@ -72,34 +72,12 @@ func NewListBox() *ListBox {
 }
 
 func (lb *ListBox) Open(ui *UI) {
-	var (
-		err  error
-		keys []string
-	)
-
-	if keys, err = service.ListKeys(); err != nil {
+	keys, err := service.ListKeys()
+	if err != nil {
 		log.Warn("Service list keys failed, %v", err)
 		return
 	}
 	defer service.CloseAll()
-
-	/*
-		if lb.dataAll == nil {
-			lb.dataAll = make([]string, 12)
-		}
-		lb.dataAll[0] = "P0"
-		lb.dataAll[1] = "P1"
-		lb.dataAll[2] = "P2"
-		lb.dataAll[3] = "P3"
-		lb.dataAll[4] = "P4"
-		lb.dataAll[5] = "P5"
-		lb.dataAll[6] = "P6"
-		lb.dataAll[7] = "P7"
-		lb.dataAll[8] = "P8"
-		lb.dataAll[9] = "P9"
-		lb.dataAll[10] = "P10"
-		lb.dataAll[11] = "P11"
-	*/
 
 	lb.ui = ui
 	lb.dataAll = keys
@@ -148,25 +126,25 @@ func (lb *ListBox) match() {
 
 			changed = false
 			v := lb.ui.EditBox.Value()
-			lb.filter(string(v))
+			lb.filter(v)
 			lb.draw(0)
 			//log.Debug("%s", string(v))
 		}
 	}
 }
 
-func (lb *ListBox) filter(key string) {
+func (lb *ListBox) filter(key []byte) {
 	if len(key) <= 0 {
 		lb.dataDraw = lb.dataAll[:]
 		return
 	}
 
-	pattern := fmt.Sprintf("(?i)%s", key)
-	dataDraw := make([]string, 0)
+	pattern := fmt.Sprintf("(?i)%s", string(key))
+	dataDraw := make([][]byte, 0)
 	for _, d := range lb.dataAll {
-		ok, err := regexp.MatchString(pattern, d)
+		ok, err := regexp.Match(pattern, d)
 		if err != nil {
-			log.Warn("%d match pattern(%s) failed", d, pattern)
+			log.Warn("%s match pattern(%s) failed", string(d), pattern)
 			continue
 		}
 		if ok {
@@ -318,7 +296,13 @@ func (lb *ListBox) KeyArrowDownHandler() error {
 // xsel or xclip will be needed
 func (lb *ListBox) KeyEnterHandler() error {
 	key := lb.dataDraw[lb.curDataIdx]
-	if err := clipboard.WriteAll(key); err != nil {
+	pass, err := service.GetPassword(key)
+	if err != nil {
+		log.Warn("Get password failed, %v", err)
+		NewNotify("Copy Failed", time.Second).Warn()
+		return err
+	}
+	if err = clipboard.WriteAll(string(pass)); err != nil {
 		log.Warn("Copy to clipboard failed, %v", err)
 		NewNotify("Copy Failed", time.Second).Warn()
 		return err

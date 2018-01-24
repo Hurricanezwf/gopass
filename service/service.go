@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	MetaFile string = "./meta/meta.db"
+	MetaFile string = "meta.db"
 )
 
 var (
@@ -93,7 +93,7 @@ func GetPassword(key []byte) ([]byte, error) {
 	return passwd.Get(key)
 }
 
-func ListKeys() ([]string, error) {
+func ListKeys() ([][]byte, error) {
 	passwdMutex.RLock()
 	defer passwdMutex.RUnlock()
 

@@ -4,9 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/user"
 	"path/filepath"
 	"time"
 
+	"github.com/Hurricanezwf/gopass/log"
 	"github.com/Hurricanezwf/gopass/utils"
 	"github.com/boltdb/bolt"
 )
@@ -31,8 +33,14 @@ func (p *PasswdSVC) Open(metaFile string) error {
 		return errors.New("Empty metafile")
 	}
 
-	metaPath := filepath.Dir(metaFile)
-	os.MkdirAll(metaPath, os.ModePerm)
+	user, err := user.Current()
+	if err != nil || user == nil {
+		return fmt.Errorf("Get current user failed, %v", err)
+	}
+	metaDir := filepath.Join(user.HomeDir, ".gopass")
+	metaFile = filepath.Join(metaDir, metaFile)
+	os.MkdirAll(metaDir, os.ModePerm)
+	log.Debug("Create dir %s", metaDir)
 
 	db, err := bolt.Open(metaFile, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
@@ -80,34 +88,41 @@ func (p *PasswdSVC) Add(key, password []byte) error {
 
 // 解密后返回
 func (p *PasswdSVC) Get(key []byte) ([]byte, error) {
-	var v []byte
-	err := p.db.View(func(tx *bolt.Tx) error {
+	var (
+		err error
+		v   []byte
+		k   = utils.Encrypt(key)
+	)
+
+	if err = p.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(defaultBucket)
 		if b == nil {
 			return ErrNotExist
 		}
-		if v = b.Get(key); len(v) <= 0 {
+		if v = b.Get(k); len(v) <= 0 {
 			return ErrNotExist
 		}
 		return nil
-	})
-	if err != nil {
+	}); err != nil {
 		return nil, err
 	}
-
-	// TODO: 解密
-
+	if len(v) <= 0 {
+		return nil, fmt.Errorf("Password for key(%s) is empty", string(key))
+	}
+	if v, err = utils.Decrypt(v); err != nil {
+		return nil, fmt.Errorf("Decrypt password failed, %v", err)
+	}
 	return v, nil
 }
 
-func (p *PasswdSVC) ListKeys() ([]string, error) {
-	keys := make([]string, 0)
+func (p *PasswdSVC) ListKeys() ([][]byte, error) {
+	keys := make([][]byte, 0)
 	if err := p.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(defaultBucket)
 		if b != nil {
 			err := b.ForEach(func(k, v []byte) error {
 				if dk, e := utils.Decrypt(k); e == nil && len(dk) > 0 {
-					keys = append(keys, string(dk))
+					keys = append(keys, dk)
 				}
 				return nil
 			})

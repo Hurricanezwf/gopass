@@ -10,6 +10,6 @@ func Encrypt(src []byte) []byte {
 
 func Decrypt(src []byte) ([]byte, error) {
 	dst := make([]byte, base64.StdEncoding.DecodedLen(len(src)))
-	_, err := base64.StdEncoding.Decode(dst, src)
-	return dst, err
+	n, err := base64.StdEncoding.Decode(dst, src)
+	return dst[:n], err
 }

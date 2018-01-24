@@ -185,7 +185,7 @@ func initLog(logFile string) {
 	}
 
 	logConf := &log.LogConf{}
-	logConf.SetLogLevel("warn")
+	logConf.SetLogLevel("debug")
 	logConf.SetLogWay(log.LogWayFile)
 	logConf.SetLogFile(logFile)
 	log.Init(logConf)
