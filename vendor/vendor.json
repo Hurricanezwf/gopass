@@ -3,10 +3,22 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "+MEWMsS4mJ9jNhwfVeyBMpdyVCQ=",
+			"path": "github.com/astaxie/beego/logs",
+			"revision": "cab8458c1c4a5a3b4bf5192922be620e6dede15b",
+			"revisionTime": "2017-05-19T13:19:18Z"
+		},
+		{
 			"checksumSHA1": "goU41xLccm4c+VnPOxJ71/zDl3A=",
 			"path": "github.com/atotto/clipboard",
 			"revision": "bc5958e1c8339112fc3347a89f3c482f416a69d3",
 			"revisionTime": "2017-12-29T22:41:53Z"
+		},
+		{
+			"checksumSHA1": "lbE4q2dpUgue10EEx8eutP36vzo=",
+			"path": "github.com/boltdb/bolt",
+			"revision": "9da31745363232bc1e27dbab3569e77383a51585",
+			"revisionTime": "2017-11-20T01:03:07Z"
 		},
 		{
 			"checksumSHA1": "cJE7dphDlam/i7PhnsyosNWtbd4=",

@@ -1,2 +1,6 @@
-all:
+relase:
+	go fmt ./...
+	go build
+debug:
+	go fmt ./...
 	go build -gcflags='-l -N'

@@ -28,7 +28,7 @@ func main() {
 		HideHelp:    true,
 		Flags: []cli.Flag{
 			&cli.BoolFlag{Name: "h", Usage: "Show help", Hidden: true},
-			&cli.PathFlag{Name: "logfile", Aliases: []string{"l"}, Usage: "Specify log file's path", Value: "./gopass.log"},
+			&cli.PathFlag{Name: "logfile", Aliases: []string{"l"}, Usage: "Specify log file's path", Value: "/var/tmp/gopass.log"},
 		},
 		Commands: []*cli.Command{
 			// add password
