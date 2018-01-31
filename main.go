@@ -13,7 +13,7 @@ import (
 // Command list
 const (
 	ADD    = "add"
-	GET    = "get"
+	GET    = "ui"
 	DEL    = "del"
 	UPDATE = "update"
 	HELP   = "help"
@@ -23,7 +23,8 @@ func main() {
 	app := &cli.App{
 		Version:     "0.0.1",
 		Name:        "gopass",
-		UsageText:   "gopass [add|del]",
+		Usage:       "A tool for managing your password in terminal",
+		UsageText:   "gopass [options] [command]",
 		HideVersion: true,
 		HideHelp:    true,
 		Flags: []cli.Flag{
@@ -34,32 +35,35 @@ func main() {
 			// add password
 			&cli.Command{
 				Name:      ADD,
-				Usage:     "add password to manager",
-				UsageText: "gopass add $(key) $(password)",
+				Usage:     "add password into gopass",
+				UsageText: "gopass add [key] [password]",
 				Action:    AddAction,
 			},
 			// del password
 			&cli.Command{
 				Name:      DEL,
-				Usage:     "delete password to manager",
-				UsageText: "gopass del $(key)",
+				Usage:     "delete password from gopass",
+				UsageText: "gopass del [key]",
 				Action:    DelAction,
 			},
 			// update password
 			&cli.Command{
 				Name:      UPDATE,
-				Usage:     "update password to manager",
-				UsageText: "gopass update $(key) $(new_password)",
+				Usage:     "update password into gopass",
+				UsageText: "gopass update [key] [new_password]",
 				Action:    UpdateAction,
 			},
 			// get password
 			&cli.Command{
-				Name:   GET,
-				Action: GetAction,
+				Name:      GET,
+				Usage:     "display ui to search and copy password",
+				UsageText: "gopass ui",
+				Action:    GetAction,
 			},
 			// show help
 			&cli.Command{
 				Name:   HELP,
+				Usage:  "show help",
 				Action: HelpAction,
 			},
 		},
