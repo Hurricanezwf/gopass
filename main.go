@@ -3,8 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
 
-	"github.com/Hurricanezwf/gopass/log"
 	"github.com/Hurricanezwf/gopass/service"
 	"github.com/Hurricanezwf/gopass/ui"
 	cli "gopkg.in/urfave/cli.v2"
@@ -20,6 +21,9 @@ const (
 )
 
 func main() {
+	path, _ := exec.LookPath(os.Args[0])
+	path, _ = filepath.Abs(path)
+	fmt.Printf("%s\n", path)
 	app := &cli.App{
 		Version:     "0.0.1",
 		Name:        "gopass",
@@ -29,7 +33,6 @@ func main() {
 		HideHelp:    true,
 		Flags: []cli.Flag{
 			&cli.BoolFlag{Name: "h", Usage: "Show help", Hidden: true},
-			&cli.PathFlag{Name: "logfile", Aliases: []string{"l"}, Usage: "Specify log file's path", Value: "/var/tmp/gopass.log"},
 		},
 		Commands: []*cli.Command{
 			// add password
@@ -70,7 +73,6 @@ func main() {
 	}
 
 	app.Before = func(c *cli.Context) error {
-		initLog(c.Path("logfile"))
 		return nil
 	}
 
@@ -181,16 +183,4 @@ func GetAction(c *cli.Context) error {
 func HelpAction(c *cli.Context) error {
 	cli.ShowAppHelp(c)
 	return nil
-}
-
-func initLog(logFile string) {
-	if len(logFile) <= 0 {
-		logFile = "./gopass.log"
-	}
-
-	logConf := &log.LogConf{}
-	logConf.SetLogLevel("debug")
-	logConf.SetLogWay(log.LogWayFile)
-	logConf.SetLogFile(logFile)
-	log.Init(logConf)
 }
