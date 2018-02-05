@@ -1,4 +1,4 @@
-relase:
+release:
 	go fmt ./...
 	go build
 debug:
