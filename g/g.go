@@ -7,6 +7,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/Hurricanezwf/gopass/log"
 	"github.com/astaxie/beego/config"
@@ -34,38 +35,30 @@ func LoadConf(configfile string) error {
 	}
 
 	// Log相关
-	if LogWay = conf.String("LogWay"); len(LogWay) <= 0 {
-		// use default
-		LogWay = "none"
-	}
+	LogWay = conf.String("LogWay")
+	LogWay = strings.ToLower(LogWay)
 	switch LogWay {
 	case LogWayFile:
-		goto TAG1
-	case LogWayConsole:
-		goto TAG2
-	case LogWayNone:
-		goto TAG3
+		{
+			if LogFile = conf.String("LogFile"); len(LogFile) <= 0 {
+				return errors.New("Missing `LogFile` field")
+			}
+
+			LogLevel = conf.String("LogLevel")
+			LogLevel = strings.ToLower(LogLevel)
+			switch LogLevel {
+			case "error", "warn", "notice", "info", "debug":
+			default:
+				LogLevel = "warn"
+			}
+
+			initLog()
+		}
+	case LogWayDisabled:
+		// do nothing
 	default:
 		return errors.New("Invalid LogWay")
 	}
-
-TAG1:
-	if LogFile = conf.String("LogFile"); len(LogFile) <= 0 {
-		return errors.New("Missing LogFile")
-	}
-
-TAG2:
-	if LogLevel = conf.String("LogLevel"); len(LogLevel) <= 0 {
-		return errors.New("Missing LogLevel")
-	}
-	switch LogLevel {
-	case "error", "warn", "notice", "info", "debug":
-	default:
-		return errors.New("Invalid LogLevel")
-	}
-
-TAG3:
-	initLog()
 
 	// Core相关
 	if MetaDir = conf.String("MetaDir"); len(MetaDir) <= 0 {
@@ -80,40 +73,46 @@ TAG3:
 				return errors.New("Get current user failed, user is nil")
 			}
 			MetaDir = filepath.Join(user.HomeDir, ".gopass")
-		//case "darwin":
-		// TODO:
 		case "windows":
 			// TODO:
 		}
 
 	}
-	info, err := os.Stat(MetaDir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return fmt.Errorf("MetaDir(%s) doesnt' existed, please create it by yourself", MetaDir)
-		}
-		return err
-	}
-	if info.IsDir() == false {
-		return fmt.Errorf("MetaDir(%s) is not a dir", MetaDir)
-	}
+	//info, err := os.Stat(MetaDir)
+	//if err != nil {
+	//	if os.IsNotExist(err) {
+	//		return fmt.Errorf("MetaDir(%s) doesnt' existed, please create it by yourself", MetaDir)
+	//	}
+	//	return err
+	//}
+	//if info.IsDir() == false {
+	//	return fmt.Errorf("MetaDir(%s) is not a dir", MetaDir)
+	//}
 
 	log.Info("========================= GOPASS CONFIG ==========================")
-	log.Info("% -24s : %s", LogWay)
-	log.Info("% -24s : %s", LogLevel)
-	log.Info("% -24s : %s", LogFile)
-	log.Info("% -24s : %s", MetaDir)
+	log.Info("% -24s : %s", "LogWay", LogWay)
+	log.Info("% -24s : %s", "LogLevel", LogLevel)
+	log.Info("% -24s : %s", "LogFile", LogFile)
+	log.Info("% -24s : %s", "MetaDir", MetaDir)
 	log.Info("==================================================================")
 
 	return nil
 }
 
 func initLog() {
-	if LogWay != LogWayNone {
-		logConf := &log.LogConf{}
-		logConf.SetLogLevel(LogLevel)
-		logConf.SetLogWay(LogWay)
-		logConf.SetLogFile(LogFile)
-		log.Init(logConf)
+	if LogWay == LogWayDisabled {
+		return
 	}
+
+	logDir := filepath.Dir(LogFile)
+	if err := os.MkdirAll(logDir, os.ModePerm); err != nil {
+		err = fmt.Errorf("Create log dir %s failed, %v", logDir, err)
+		panic(err)
+	}
+
+	logConf := &log.LogConf{}
+	logConf.SetLogLevel(LogLevel)
+	logConf.SetLogWay(LogWay)
+	logConf.SetLogFile(LogFile)
+	log.Init(logConf)
 }

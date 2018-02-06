@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Hurricanezwf/gopass/log"
-	"github.com/Hurricanezwf/gopass/service"
+	"github.com/Hurricanezwf/gopass/password"
 	"github.com/atotto/clipboard"
 	termbox "github.com/nsf/termbox-go"
 )
@@ -72,12 +72,11 @@ func NewListBox() *ListBox {
 }
 
 func (lb *ListBox) Open(ui *UI) {
-	keys, err := service.ListKeys()
+	keys, err := password.ListKeys()
 	if err != nil {
-		log.Warn("Service list keys failed, %v", err)
+		log.Warn("Password list keys failed, %v", err)
 		return
 	}
-	defer service.CloseAll()
 
 	lb.ui = ui
 	lb.dataAll = keys
@@ -296,7 +295,7 @@ func (lb *ListBox) KeyArrowDownHandler() error {
 // xsel or xclip will be needed
 func (lb *ListBox) KeyEnterHandler() error {
 	key := lb.dataDraw[lb.curDataIdx]
-	pass, err := service.GetPassword(key)
+	pass, err := password.Get(key)
 	if err != nil {
 		log.Warn("Get password failed, %v", err)
 		NewNotify("Copy Failed", time.Second).Warn()
