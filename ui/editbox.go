@@ -2,6 +2,7 @@ package ui
 
 import (
 	"bytes"
+	"container/list"
 	"fmt"
 	"unicode/utf8"
 
@@ -92,7 +93,8 @@ type EditBox struct {
 	ui *UI
 
 	// 编辑框内容
-	text []byte
+	text     []byte
+	runeSize *list.List
 
 	boxX int
 	boxY int
@@ -100,8 +102,9 @@ type EditBox struct {
 
 func NewEditBox() *EditBox {
 	return &EditBox{
-		Conf: DefaultEditBoxConfig(),
-		text: make([]byte, 0),
+		Conf:     DefaultEditBoxConfig(),
+		text:     make([]byte, 0),
+		runeSize: list.New(),
 	}
 }
 
@@ -170,39 +173,56 @@ func (eb *EditBox) Value() []byte {
 
 func (eb *EditBox) InsertRune(r rune) {
 	b := make([]byte, utf8.RuneLen(r))
-	utf8.EncodeRune(b, r)
-	eb.text = ByteSliceInsert(eb.text, len(eb.text), b)
+	n := utf8.EncodeRune(b, r)
+	eb.text = ByteSliceInsert(eb.text, len(eb.text), b[:n])
+	eb.runeSize.PushBack(n)
 	eb.flush()
 }
 
 func (eb *EditBox) DeleteRune() {
 	if len(eb.text) > 0 {
-		eb.text = eb.text[:len(eb.text)-1]
+		element := eb.runeSize.Back()
+		rmSize := element.Value.(int)
+		eb.text = eb.text[:len(eb.text)-rmSize]
+		eb.runeSize.Remove(element)
 	}
 	eb.flush()
 }
 
 func (eb *EditBox) flush() {
 	var (
-		txt   []byte
-		boxX  = eb.boxX
-		boxY  = eb.boxY
-		color = eb.Conf.boxColor
-		space = 2
-		span  = eb.Conf.boxSpan - space*2
+		txt              []byte
+		boxX             = eb.boxX
+		boxY             = eb.boxY
+		color            = eb.Conf.boxColor
+		space            = 2
+		span             = eb.Conf.boxSpan - space*2
+		cursorPos        = boxX + space
+		cursorRightLimit = boxX + span
 	)
 
-	if len(eb.text) <= span {
-		txt = eb.text
-	} else {
-		txt = eb.text[len(eb.text)-span:]
+	displayLen := 0
+	for back := eb.runeSize.Back(); back != nil; back = back.Prev() {
+		l := back.Value.(int)
+		if cursorPos > cursorRightLimit {
+			break
+		}
+		if l > 1 {
+			// 只有非英文字符才大于1字节，中文显示用两个字节
+			cursorPos += 2
+		} else {
+			cursorPos += 1
+		}
+		displayLen += l
 	}
+	txt = eb.text[len(eb.text)-displayLen:]
 	eb.clear()
 	TBPrint(boxX+space, boxY, color, color, string(txt))
-	termbox.SetCursor(boxX+space+len(txt), boxY)
+	termbox.SetCursor(cursorPos, boxY)
 	termbox.Flush()
 }
 
+// clear会清空编辑框的内容
 func (eb *EditBox) clear() {
 	var (
 		boxX = eb.boxX

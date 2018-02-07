@@ -80,7 +80,7 @@ func (lb *ListBox) Open(ui *UI) {
 
 	lb.ui = ui
 	lb.dataAll = keys
-	lb.dataDraw = lb.dataAll[:]
+	lb.resetDataDraw(lb.dataAll[:])
 
 	// listen keys search
 	go lb.match()
@@ -134,7 +134,7 @@ func (lb *ListBox) match() {
 
 func (lb *ListBox) filter(key []byte) {
 	if len(key) <= 0 {
-		lb.dataDraw = lb.dataAll[:]
+		lb.resetDataDraw(lb.dataAll[:])
 		return
 	}
 
@@ -150,7 +150,7 @@ func (lb *ListBox) filter(key []byte) {
 			dataDraw = append(dataDraw, d)
 		}
 	}
-	lb.dataDraw = dataDraw
+	lb.resetDataDraw(dataDraw)
 	log.Debug("After filter, dataDraw size:%d", len(dataDraw))
 }
 
@@ -207,6 +207,12 @@ func (lb *ListBox) draw(pageNo int) {
 	}
 
 	termbox.Flush()
+}
+
+func (lb *ListBox) resetDataDraw(data [][]byte) {
+	lb.dataDraw = data
+	lb.curPageIdx = 0
+	lb.curDataIdx = 0
 }
 
 func (lb *ListBox) Clear() {

@@ -1,6 +1,6 @@
 release:
 	@go fmt ./...
-	@go build
+	@go build -ldflags '-s -w'
 debug:
 	@go fmt ./...
 	@go build -gcflags='-l -N'
