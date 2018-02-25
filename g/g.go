@@ -89,12 +89,12 @@ func LoadConf(configfile string) error {
 	//	return fmt.Errorf("MetaDir(%s) is not a dir", MetaDir)
 	//}
 
-	log.Info("========================= GOPASS CONFIG ==========================")
-	log.Info("% -24s : %s", "LogWay", LogWay)
-	log.Info("% -24s : %s", "LogLevel", LogLevel)
-	log.Info("% -24s : %s", "LogFile", LogFile)
-	log.Info("% -24s : %s", "MetaDir", MetaDir)
-	log.Info("==================================================================")
+	log.Debug("========================= GOPASS CONFIG ==========================")
+	log.Debug("% -24s : %s", "LogWay", LogWay)
+	log.Debug("% -24s : %s", "LogLevel", LogLevel)
+	log.Debug("% -24s : %s", "LogFile", LogFile)
+	log.Debug("% -24s : %s", "MetaDir", MetaDir)
+	log.Debug("==================================================================")
 
 	return nil
 }

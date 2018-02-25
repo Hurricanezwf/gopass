@@ -226,7 +226,7 @@ func (lb *ListBox) Clear() {
 	Fill(boxX-1, boxY+2, boxSpanX, 2*pageDataNum, termbox.Cell{Ch: ' '})
 }
 
-func (lb *ListBox) KeyArrowUpHandler() error {
+func (lb *ListBox) Prev() error {
 	var (
 		err       error
 		dataIdx   = lb.curDataIdx - 1
@@ -262,7 +262,7 @@ func (lb *ListBox) KeyArrowUpHandler() error {
 	return nil
 }
 
-func (lb *ListBox) KeyArrowDownHandler() error {
+func (lb *ListBox) Next() error {
 	var (
 		err       error
 		dataIdx   = lb.curDataIdx + 1
@@ -299,7 +299,7 @@ func (lb *ListBox) KeyArrowDownHandler() error {
 }
 
 // xsel or xclip will be needed
-func (lb *ListBox) KeyEnterHandler() error {
+func (lb *ListBox) CopySel() error {
 	key := lb.dataDraw[lb.curDataIdx]
 	pass, err := password.Get(key)
 	if err != nil {
