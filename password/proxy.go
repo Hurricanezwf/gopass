@@ -178,7 +178,7 @@ func (p *PasswdProxy) Del(key []byte) error {
 		if err != nil {
 			return err
 		}
-		if err = b.Delete(key); err != nil {
+		if err = b.Delete(k); err != nil {
 			return err
 		}
 		return nil
