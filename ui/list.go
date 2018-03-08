@@ -80,7 +80,7 @@ func (lb *ListBox) Open(ui *UI) {
 
 	lb.ui = ui
 	lb.dataAll = keys
-	lb.dataDraw = lb.dataAll[:]
+	lb.resetDataDraw(lb.dataAll[:])
 
 	// listen keys search
 	go lb.match()
@@ -134,7 +134,7 @@ func (lb *ListBox) match() {
 
 func (lb *ListBox) filter(key []byte) {
 	if len(key) <= 0 {
-		lb.dataDraw = lb.dataAll[:]
+		lb.resetDataDraw(lb.dataAll[:])
 		return
 	}
 
@@ -150,7 +150,7 @@ func (lb *ListBox) filter(key []byte) {
 			dataDraw = append(dataDraw, d)
 		}
 	}
-	lb.dataDraw = dataDraw
+	lb.resetDataDraw(dataDraw)
 	log.Debug("After filter, dataDraw size:%d", len(dataDraw))
 }
 
@@ -209,6 +209,12 @@ func (lb *ListBox) draw(pageNo int) {
 	termbox.Flush()
 }
 
+func (lb *ListBox) resetDataDraw(data [][]byte) {
+	lb.dataDraw = data
+	lb.curPageIdx = 0
+	lb.curDataIdx = 0
+}
+
 func (lb *ListBox) Clear() {
 	var (
 		boxX        = lb.Conf.boxLeftMargin
@@ -220,7 +226,7 @@ func (lb *ListBox) Clear() {
 	Fill(boxX-1, boxY+2, boxSpanX, 2*pageDataNum, termbox.Cell{Ch: ' '})
 }
 
-func (lb *ListBox) KeyArrowUpHandler() error {
+func (lb *ListBox) Prev() error {
 	var (
 		err       error
 		dataIdx   = lb.curDataIdx - 1
@@ -256,7 +262,7 @@ func (lb *ListBox) KeyArrowUpHandler() error {
 	return nil
 }
 
-func (lb *ListBox) KeyArrowDownHandler() error {
+func (lb *ListBox) Next() error {
 	var (
 		err       error
 		dataIdx   = lb.curDataIdx + 1
@@ -293,7 +299,7 @@ func (lb *ListBox) KeyArrowDownHandler() error {
 }
 
 // xsel or xclip will be needed
-func (lb *ListBox) KeyEnterHandler() error {
+func (lb *ListBox) CopySel() error {
 	key := lb.dataDraw[lb.curDataIdx]
 	pass, err := password.Get(key)
 	if err != nil {
