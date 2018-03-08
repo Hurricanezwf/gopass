@@ -11,7 +11,7 @@ gopass是一个跨平台的密码管理工具，该工具旨在解决linux终端
 ```Go
 CentOS: sudo yum -y install xclip
 Ubuntu: sudo apt -y install xclip
-Mac:    
+Mac:    依赖于pbcopy,已默认安装
 ```
 
 * 将配置文件和gopass二进制文件放在同一目录下，直接运行gopass -h查看用法    
