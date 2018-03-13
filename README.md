@@ -1,3 +1,9 @@
+[简介](#简介)
+[快速开始](#快速开始)
+[演示](#演示)
+[UI快捷键](#UI快捷键)
+
+
 ### 简介
 gopass是一个跨平台的密码管理工具，该工具旨在解决linux终端下使用密码不方便的问题。  
 
@@ -33,7 +39,7 @@ COMMANDS:
      version  show version
 ```
 
-## Demo
+## 演示
 [![asciicast](https://asciinema.org/a/0fPa5CJzUiue5Ilt1aJyd0I1x.png)](https://asciinema.org/a/0fPa5CJzUiue5Ilt1aJyd0I1x)
 
 ### UI快捷键
