@@ -1,6 +1,6 @@
 * [简介](#简介)
-* [快速开始](#快速开始)
 * [演示](#演示)
+* [快速开始](#快速开始)
 * [UI快捷键](#UI快捷键)
 
 
@@ -9,6 +9,10 @@ gopass是一个跨平台的密码管理工具，该工具旨在解决linux终端
 
 * 直接终端操作，无须在各个应用之间切换，比较适用于重度使用终端的同学。  
 * 支持在终端以图形界面的方式搜索匹配，复制粘贴，简化了上手难度、提高了工作效率  
+
+
+### 演示
+[![asciicast](https://asciinema.org/a/0fPa5CJzUiue5Ilt1aJyd0I1x.png)](https://asciinema.org/a/0fPa5CJzUiue5Ilt1aJyd0I1x)
 
 
 ### 快速开始
@@ -39,8 +43,6 @@ COMMANDS:
      version  show version
 ```
 
-### 演示
-[![asciicast](https://asciinema.org/a/0fPa5CJzUiue5Ilt1aJyd0I1x.png)](https://asciinema.org/a/0fPa5CJzUiue5Ilt1aJyd0I1x)
 
 ### UI快捷键
 |按键|功能|
@@ -48,5 +50,3 @@ COMMANDS:
 |小写q|退出UI|  
 |Enter|复制对应的密码内容|
 |Ctrl+Q|清楚搜索框的内容|
-
-
