@@ -1,7 +1,7 @@
-[简介](#简介)
-[快速开始](#快速开始)
-[演示](#演示)
-[UI快捷键](#UI快捷键)
+* [简介](#简介)
+* [快速开始](#快速开始)
+* [演示](#演示)
+* [快捷键](#快捷键)
 
 
 ### 简介
@@ -39,7 +39,7 @@ COMMANDS:
      version  show version
 ```
 
-## 演示
+### 演示
 [![asciicast](https://asciinema.org/a/0fPa5CJzUiue5Ilt1aJyd0I1x.png)](https://asciinema.org/a/0fPa5CJzUiue5Ilt1aJyd0I1x)
 
 ### UI快捷键
