@@ -17,7 +17,7 @@ do
         dir="${SAVEDIR}/gopass_v${VERSION}_${os}_${arch}"
         rm -rf ./$dir 
         mkdir -p ./$dir
-        GOOS=$os GOARCH=$arch go build -o ./$dir/gopass
+        GOOS=$os GOARCH=$arch go build -ldflags '-s -w' -o ./$dir/gopass
         cp ./conf.ini ./$dir/
         tar -zcvf ${dir}.tar.gz ./${dir}
         rm -rf ./${dir}
