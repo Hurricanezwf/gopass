@@ -2,20 +2,21 @@ package app
 
 import (
 	"bytes"
+	"crypto/md5"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 
 	"github.com/Hurricanezwf/gopass/g"
+	"github.com/Hurricanezwf/gopass/log"
 	"github.com/Hurricanezwf/gopass/meta"
 	"github.com/Hurricanezwf/gopass/password"
 	"github.com/Hurricanezwf/gopass/ui"
-	term "github.com/howeyc/gopass"
 	cli "gopkg.in/urfave/cli.v2"
 )
 
-const VERSION = "0.0.4"
+const VERSION = "0.0.5"
 
 func Run() {
 	app := &cli.App{
@@ -89,7 +90,10 @@ func Run() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		panic(err)
+		msg := fmt.Sprintf("\033[31m%s\033[0m", err.Error())
+		panic(msg)
+		fmt.Println(msg)
+		log.Error(msg)
 	}
 }
 
@@ -230,7 +234,6 @@ func actionInit(c *cli.Context) error {
 func auth() ([]byte, error) {
 	var (
 		err        error
-		skipEnter  bool
 		skReserved []byte
 		skEntered  []byte
 	)
@@ -246,7 +249,8 @@ func auth() ([]byte, error) {
 
 		fmt.Printf("Please init the app when you login firstly.\n\n")
 		fmt.Printf("SecretKey: ")
-		sk1, err = term.GetPasswdMasked()
+		//sk1, err = term.GetPasswdMasked()
+		sk1, err = []byte("zwf"), nil
 		if err != nil {
 			return nil, err
 		}
@@ -255,7 +259,8 @@ func auth() ([]byte, error) {
 		}
 
 		fmt.Printf("Again    : ")
-		sk2, err = term.GetPasswdMasked()
+		//sk2, err = term.GetPasswdMasked()
+		sk2, err = []byte("zwf"), nil
 		if err != nil {
 			return nil, err
 		}
@@ -268,21 +273,23 @@ func auth() ([]byte, error) {
 		if skReserved, err = password.InitAuthSK(sk1); err != nil {
 			return nil, fmt.Errorf("Init auth sk failed, %v", err)
 		}
-		skipEnter = true
+		skEntered = skReserved
 	}
 
 	// enter
-	if skipEnter == false {
+	if len(skEntered) <= 0 {
 		fmt.Printf("SecretKey: ")
-		skEntered, err = term.GetPasswdMasked()
+		//skEntered, err = term.GetPasswdMasked()
+		skEntered, err = []byte("zwf"), nil
 		if err != nil {
 			return nil, err
 		}
+		skEntered = []byte(fmt.Sprintf("%x", md5.Sum(skEntered)))
 	}
 
 	// compare
-	if bytes.Equal(skEntered, skReserved) == false {
-		return nil, fmt.Errorf("SK not equal")
+	if bytes.Compare(skEntered, skReserved) != 0 {
+		return nil, fmt.Errorf("SecretKey not match")
 	}
 
 	return skReserved, nil
