@@ -1,14 +1,17 @@
 package app
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 
 	"github.com/Hurricanezwf/gopass/g"
+	"github.com/Hurricanezwf/gopass/meta"
 	"github.com/Hurricanezwf/gopass/password"
 	"github.com/Hurricanezwf/gopass/ui"
+	term "github.com/howeyc/gopass"
 	cli "gopkg.in/urfave/cli.v2"
 )
 
@@ -94,6 +97,7 @@ func AddAction(c *cli.Context) error {
 	var (
 		err  error
 		args []string
+		sk   []byte
 	)
 
 	if args = c.Args().Slice(); len(args) != 2 {
@@ -105,7 +109,11 @@ func AddAction(c *cli.Context) error {
 		return err
 	}
 
-	if err = password.Add([]byte(args[0]), []byte(args[1])); err != nil {
+	if sk, err = auth(); err != nil {
+		return fmt.Errorf("Auth failed, %v", err)
+	}
+
+	if err = password.Add(sk, []byte(args[0]), []byte(args[1])); err != nil {
 		return fmt.Errorf("Add password failed, %v", err)
 	}
 	fmt.Printf("\033[32mAdd OK\033[0m\n")
@@ -116,6 +124,7 @@ func DelAction(c *cli.Context) error {
 	var (
 		err  error
 		args []string
+		sk   []byte
 	)
 
 	if args = c.Args().Slice(); len(args) != 1 {
@@ -127,7 +136,11 @@ func DelAction(c *cli.Context) error {
 		return err
 	}
 
-	if err = password.Del([]byte(args[0])); err != nil {
+	if sk, err = auth(); err != nil {
+		return fmt.Errorf("Auth failed, %v", err)
+	}
+
+	if err = password.Del(sk, []byte(args[0])); err != nil {
 		return fmt.Errorf("Del password for key(%s) failed, %v", args[0], err)
 	}
 	fmt.Printf("\033[32mDel OK\033[0m\n")
@@ -138,6 +151,7 @@ func UpdateAction(c *cli.Context) error {
 	var (
 		err  error
 		args []string
+		sk   []byte
 	)
 
 	if args = c.Args().Slice(); len(args) != 2 {
@@ -149,7 +163,11 @@ func UpdateAction(c *cli.Context) error {
 		return err
 	}
 
-	if err = password.Update([]byte(args[0]), []byte(args[1])); err != nil {
+	if sk, err = auth(); err != nil {
+		return fmt.Errorf("Auth failed, %v", err)
+	}
+
+	if err = password.Update(sk, []byte(args[0]), []byte(args[1])); err != nil {
 		return fmt.Errorf("Update password for key(%s) failed, %v", args[0], err)
 	}
 	fmt.Printf("\033[32mUpdate OK\033[0m\n")
@@ -157,13 +175,20 @@ func UpdateAction(c *cli.Context) error {
 }
 
 func GetAction(c *cli.Context) error {
-	var err error
+	var (
+		err error
+		sk  []byte
+	)
 
 	if err = actionInit(c); err != nil {
 		return err
 	}
 
-	if err = ui.Open(); err != nil {
+	if sk, err = auth(); err != nil {
+		return fmt.Errorf("Auth failed, %v", err)
+	}
+
+	if err = ui.Open(sk); err != nil {
 		return fmt.Errorf("Open UI failed, %v", err)
 	}
 	defer ui.Close()
@@ -200,4 +225,65 @@ func actionInit(c *cli.Context) error {
 		return fmt.Errorf("Load config failed, %v. ConfigFile: %s", err, configFile)
 	}
 	return nil
+}
+
+func auth() ([]byte, error) {
+	var (
+		err        error
+		skipEnter  bool
+		skReserved []byte
+		skEntered  []byte
+	)
+
+	skReserved, err = password.GetAuthSK()
+	if err != nil {
+		if err != meta.ErrNotExist {
+			return nil, fmt.Errorf("Get auth sk failed, %v", err)
+		}
+		// init the  app
+		var err error
+		var sk1, sk2 []byte
+
+		fmt.Printf("Please init the app when you login firstly.\n\n")
+		fmt.Printf("SecretKey: ")
+		sk1, err = term.GetPasswdMasked()
+		if err != nil {
+			return nil, err
+		}
+		if len(sk1) <= 0 {
+			return nil, fmt.Errorf("Empty SecretKey input")
+		}
+
+		fmt.Printf("Again    : ")
+		sk2, err = term.GetPasswdMasked()
+		if err != nil {
+			return nil, err
+		}
+
+		if bytes.Compare(sk1, sk2) != 0 {
+			return nil, fmt.Errorf("SecretKey didn't equal")
+		}
+
+		// save to db
+		if skReserved, err = password.InitAuthSK(sk1); err != nil {
+			return nil, fmt.Errorf("Init auth sk failed, %v", err)
+		}
+		skipEnter = true
+	}
+
+	// enter
+	if skipEnter == false {
+		fmt.Printf("SecretKey: ")
+		skEntered, err = term.GetPasswdMasked()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// compare
+	if bytes.Equal(skEntered, skReserved) == false {
+		return nil, fmt.Errorf("SK not equal")
+	}
+
+	return skReserved, nil
 }

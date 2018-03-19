@@ -8,11 +8,11 @@ import (
 	termbox "github.com/nsf/termbox-go"
 )
 
-func Open() error {
+func Open(sk []byte) error {
 	if err := termbox.Init(); err != nil {
 		return fmt.Errorf("Init UI failed, %v", err)
 	}
-	NewUI().Open()
+	NewUI().Open(sk)
 	return nil
 }
 
@@ -26,6 +26,8 @@ type KeyHandler func(ui *UI, ch rune) error
 type UI struct {
 	EditBox *EditBox
 	ListBox *ListBox
+
+	sk []byte
 
 	// 按键捕获
 	handlers map[termbox.Key]KeyHandler
@@ -48,7 +50,8 @@ func NewUI() *UI {
 	}
 }
 
-func (ui *UI) Open() {
+func (ui *UI) Open(sk []byte) {
+	ui.sk = sk
 	ui.EditBox.Open(ui)
 	ui.ListBox.Open(ui)
 	termbox.Flush()

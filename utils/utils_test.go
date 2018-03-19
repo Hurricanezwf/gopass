@@ -3,19 +3,38 @@ package utils
 import (
 	"bytes"
 	"testing"
-
-	"github.com/Hurricanezwf/gopass/utils"
 )
 
-func TestEncrypt(t *testing.T) {
-	key := []byte("hello")
-	ek := utils.Encrypt(key)
-
-	dk, err := utils.Decrypt(ek)
+func TestCBCEncrypt(t *testing.T) {
+	key := []byte("zwf")
+	toEncrypt := []byte("hello")
+	ek, err := Encrypt(key, toEncrypt, TypeCBC)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
-	if bytes.Equal(key, dk) == false {
-		t.Fatalf("key(%x) != decryptKey(%x)", key, dk)
+
+	dk, err := Decrypt(key, ek)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	if bytes.Equal(toEncrypt, dk) == false {
+		t.Fatalf("origion(%x) != decrypt(%x)", toEncrypt, dk)
+	}
+}
+
+func TestXORBase64Encrypt(t *testing.T) {
+	key := []byte("zwf")
+	toDecrypt := []byte("hello")
+	ek, err := Encrypt(key, toDecrypt, TypeXORBase64)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	dk, err := Decrypt(key, ek)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	if bytes.Equal(toDecrypt, dk) == false {
+		t.Fatalf("origion(%s) != decrypt(%s)", string(toDecrypt), string(dk))
 	}
 }

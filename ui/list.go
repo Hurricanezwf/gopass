@@ -72,7 +72,7 @@ func NewListBox() *ListBox {
 }
 
 func (lb *ListBox) Open(ui *UI) {
-	keys, err := password.ListKeys()
+	keys, err := password.ListKeys(ui.sk)
 	if err != nil {
 		log.Warn("Password list keys failed, %v", err)
 		return
@@ -301,7 +301,7 @@ func (lb *ListBox) Next() error {
 // xsel or xclip will be needed
 func (lb *ListBox) CopySel() error {
 	key := lb.dataDraw[lb.curDataIdx]
-	pass, err := password.Get(key)
+	pass, err := password.Get(lb.ui.sk, key)
 	if err != nil {
 		log.Warn("Get password failed, %v", err)
 		NewNotify("Copy Failed", time.Second).Warn()
