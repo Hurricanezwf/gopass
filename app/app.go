@@ -13,6 +13,7 @@ import (
 	"github.com/Hurricanezwf/gopass/meta"
 	"github.com/Hurricanezwf/gopass/password"
 	"github.com/Hurricanezwf/gopass/ui"
+	term "github.com/howeyc/gopass"
 	cli "gopkg.in/urfave/cli.v2"
 )
 
@@ -249,8 +250,8 @@ func auth() ([]byte, error) {
 
 		fmt.Printf("Please init the app when you login firstly.\n\n")
 		fmt.Printf("SecretKey: ")
-		//sk1, err = term.GetPasswdMasked()
-		sk1, err = []byte("zwf"), nil
+		sk1, err = term.GetPasswdMasked()
+		//sk1, err = []byte("zwf"), nil
 		if err != nil {
 			return nil, err
 		}
@@ -259,8 +260,8 @@ func auth() ([]byte, error) {
 		}
 
 		fmt.Printf("Again    : ")
-		//sk2, err = term.GetPasswdMasked()
-		sk2, err = []byte("zwf"), nil
+		sk2, err = term.GetPasswdMasked()
+		//sk2, err = []byte("zwf"), nil
 		if err != nil {
 			return nil, err
 		}
@@ -279,8 +280,8 @@ func auth() ([]byte, error) {
 	// enter
 	if len(skEntered) <= 0 {
 		fmt.Printf("SecretKey: ")
-		//skEntered, err = term.GetPasswdMasked()
-		skEntered, err = []byte("zwf"), nil
+		skEntered, err = term.GetPasswdMasked()
+		//skEntered, err = []byte("zwf"), nil
 		if err != nil {
 			return nil, err
 		}
