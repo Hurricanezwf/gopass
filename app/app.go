@@ -92,7 +92,6 @@ func Run() {
 
 	if err := app.Run(os.Args); err != nil {
 		msg := fmt.Sprintf("\033[31m%s\033[0m", err.Error())
-		panic(msg)
 		fmt.Println(msg)
 		log.Error(msg)
 	}
@@ -251,7 +250,6 @@ func auth() ([]byte, error) {
 		fmt.Printf("Please init the app when you login firstly.\n\n")
 		fmt.Printf("SecretKey: ")
 		sk1, err = term.GetPasswdMasked()
-		//sk1, err = []byte("zwf"), nil
 		if err != nil {
 			return nil, err
 		}
@@ -261,7 +259,6 @@ func auth() ([]byte, error) {
 
 		fmt.Printf("Again    : ")
 		sk2, err = term.GetPasswdMasked()
-		//sk2, err = []byte("zwf"), nil
 		if err != nil {
 			return nil, err
 		}
@@ -281,7 +278,6 @@ func auth() ([]byte, error) {
 	if len(skEntered) <= 0 {
 		fmt.Printf("SecretKey: ")
 		skEntered, err = term.GetPasswdMasked()
-		//skEntered, err = []byte("zwf"), nil
 		if err != nil {
 			return nil, err
 		}

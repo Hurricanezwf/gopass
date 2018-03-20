@@ -3,6 +3,12 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "bwz/1vy/v5db0uhkckArS/KZ5xI=",
+			"path": "github.com/astaxie/beego/config",
+			"revision": "cab8458c1c4a5a3b4bf5192922be620e6dede15b",
+			"revisionTime": "2017-05-19T13:19:18Z"
+		},
+		{
 			"checksumSHA1": "+MEWMsS4mJ9jNhwfVeyBMpdyVCQ=",
 			"path": "github.com/astaxie/beego/logs",
 			"revision": "cab8458c1c4a5a3b4bf5192922be620e6dede15b",
@@ -21,6 +27,12 @@
 			"revisionTime": "2017-11-20T01:03:07Z"
 		},
 		{
+			"checksumSHA1": "K6exl2ouL7d8cR2i378EzZOdRVI=",
+			"path": "github.com/howeyc/gopass",
+			"revision": "bf9dde6d0d2c004a008c27aaee91170c786f6db8",
+			"revisionTime": "2017-01-09T16:22:49Z"
+		},
+		{
 			"checksumSHA1": "cJE7dphDlam/i7PhnsyosNWtbd4=",
 			"path": "github.com/mattn/go-runewidth",
 			"revision": "97311d9f7767e3d6f422ea06661bc2c7a19e8a5d",
@@ -31,6 +43,23 @@
 			"path": "github.com/nsf/termbox-go",
 			"revision": "aa4a75b1c20a2b03751b1a9f7e41d58bd6f71c43",
 			"revisionTime": "2017-11-04T16:23:16Z"
+		},
+		{
+			"checksumSHA1": "BGm8lKZmvJbf/YOJLeL1rw2WVjA=",
+			"path": "golang.org/x/crypto/ssh/terminal",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "TG/fajyvSz7H6KhJu8ehtJC/+Bc=",
+			"path": "golang.org/x/sys/unix",
+			"revision": "01acb38716e021ed1fc03a602bdb5838e1358c5e",
+			"revisionTime": "2018-03-18T18:58:34Z"
+		},
+		{
+			"checksumSHA1": "Dfz4tGItokMvHZENCsBmPPB8FGQ=",
+			"path": "golang.org/x/sys/windows",
+			"revision": "01acb38716e021ed1fc03a602bdb5838e1358c5e",
+			"revisionTime": "2018-03-18T18:58:34Z"
 		},
 		{
 			"checksumSHA1": "4c8aIV5NI4wA55OW0wCt/1S/3Nw=",
