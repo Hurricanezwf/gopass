@@ -24,7 +24,7 @@ func Run() {
 		Version:     VERSION,
 		Name:        "gopass",
 		Usage:       "A tool for managing your password in terminal",
-		UsageText:   "gopass [command]",
+		UsageText:   "gopass [command] [-c ConfigFile]",
 		HideVersion: true,
 		HideHelp:    true,
 		Flags: []cli.Flag{
