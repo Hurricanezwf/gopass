@@ -24,7 +24,7 @@ Ubuntu: sudo apt -y install xclip
 Mac:    依赖于pbcopy,已默认安装
 ```
 
-* 将配置文件和gopass二进制文件放在同一目录下，直接运行gopass -h查看用法    
+* 将配置文件和gopass二进制文件放在同一目录下(也可用-c指定配置路径)，直接运行gopass -h查看用法    
 
 
 ```Go
@@ -32,7 +32,7 @@ NAME:
    gopass - A tool for managing your password in terminal
 
 USAGE:
-   gopass [command]
+   gopass [command] [-c Config]
 
 COMMANDS:
      add      add password into gopass
