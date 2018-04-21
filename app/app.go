@@ -17,7 +17,7 @@ import (
 	cli "gopkg.in/urfave/cli.v2"
 )
 
-const VERSION = "0.0.5"
+const VERSION = "0.1.0"
 
 func Run() {
 	app := &cli.App{
@@ -67,6 +67,16 @@ func Run() {
 				Usage:     "display ui to search and copy password",
 				UsageText: "gopass ui [-c ConfigFile]",
 				Action:    GetAction,
+				Flags: []cli.Flag{
+					&cli.PathFlag{Name: "c", Usage: "Specify config file's path", Value: ""},
+				},
+			},
+			// change SecretKey
+			&cli.Command{
+				Name:      g.CMDChSK,
+				Usage:     "change auth SecretKey which you provide for authentication when init the app",
+				UsageText: "gopass chsk [newSecretKey] [-c ConfigFile]",
+				Action:    ChSKAction,
 				Flags: []cli.Flag{
 					&cli.PathFlag{Name: "c", Usage: "Specify config file's path", Value: ""},
 				},
@@ -197,6 +207,33 @@ func GetAction(c *cli.Context) error {
 	}
 	defer ui.Close()
 
+	return nil
+}
+
+func ChSKAction(c *cli.Context) error {
+	var (
+		err  error
+		args []string
+		sk   []byte
+	)
+
+	if args = c.Args().Slice(); len(args) != 1 {
+		cli.ShowCommandHelp(c, g.CMDChSK)
+		return nil
+	}
+
+	if err = actionInit(c); err != nil {
+		return err
+	}
+
+	if sk, err = auth(); err != nil {
+		return fmt.Errorf("Auth failed, %v", err)
+	}
+
+	if err = password.ChangeSK(sk, []byte(args[0])); err != nil {
+		return fmt.Errorf("Change failed, Err: %v. Please refer log for more details.", err)
+	}
+	fmt.Printf("\033[32mChange OK\033[0m\n")
 	return nil
 }
 

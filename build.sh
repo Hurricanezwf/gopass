@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION=0.0.5
+VERSION=0.1.0
 SAVEDIR=release
 OS=(linux darwin)
 ARCH=(amd64 386)

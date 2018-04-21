@@ -16,6 +16,11 @@ var (
 	ErrExisted  = errors.New("Existed")
 )
 
+type Pair struct {
+	K []byte
+	V []byte
+}
+
 type Meta struct {
 	// 元数据存储文件
 	metaFile string
@@ -49,7 +54,9 @@ func Open(metaFile string, readOnly bool) (*Meta, error) {
 
 func (m *Meta) Close() error {
 	if m.db != nil {
-		return m.db.Close()
+		tmpDB := m.db
+		m.db = nil
+		return tmpDB.Close()
 	}
 	return nil
 }
@@ -140,6 +147,27 @@ func (m *Meta) ListKeys(bucket []byte) ([][]byte, error) {
 		return nil, err
 	}
 	return keys, nil
+}
+
+func (m *Meta) ListAll(bucket []byte) ([]Pair, error) {
+	pairs := make([]Pair, 0, 32)
+	err := m.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(bucket)
+		if b != nil {
+			err := b.ForEach(func(k, v []byte) error {
+				pairs = append(pairs, Pair{K: k, V: v})
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return pairs[:len(pairs)], nil
 }
 
 func (m *Meta) Update(bucket, k, v []byte) error {

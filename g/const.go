@@ -6,6 +6,7 @@ const (
 	CMDGet     = "ui"
 	CMDDel     = "del"
 	CMDUpdate  = "update"
+	CMDChSK    = "chsk"
 	CMDHelp    = "help"
 	CMDVersion = "version"
 )
