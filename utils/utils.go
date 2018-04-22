@@ -12,15 +12,15 @@ import (
 
 const (
 	TypeXORBase64 byte = 0x01
-	TypeCBC       byte = 0x02
+	TypeAES       byte = 0x02
 )
 
 func Encrypt(key, toEncrypt []byte, encType byte) ([]byte, error) {
 	switch encType {
 	case TypeXORBase64:
 		return EncryptWithXORBase64(key, toEncrypt)
-	case TypeCBC:
-		return EncryptWithCBC(key, toEncrypt)
+	case TypeAES:
+		return EncryptWithAES(key, toEncrypt)
 	}
 	return nil, errors.New("No Encrypt method found")
 }
@@ -30,14 +30,14 @@ func Decrypt(key, toDecrypt []byte) ([]byte, error) {
 	switch t {
 	case TypeXORBase64:
 		return DecryptWithXORBase64(key, toDecrypt[:len(toDecrypt)-1])
-	case TypeCBC:
-		return DecryptWithCBC(key, toDecrypt[:len(toDecrypt)-1])
+	case TypeAES:
+		return DecryptWithAES(key, toDecrypt[:len(toDecrypt)-1])
 	}
 	return nil, errors.New("No Decrypt method found")
 }
 
-// CBC
-func EncryptWithCBC(key, src []byte) ([]byte, error) {
+// AES
+func EncryptWithAES(key, src []byte) ([]byte, error) {
 	// add padding
 	toEncrypt := make([]byte, 0, len(src))
 	toEncrypt = append(toEncrypt, src...)
@@ -61,11 +61,11 @@ func EncryptWithCBC(key, src []byte) ([]byte, error) {
 
 	mode := cipher.NewCBCEncrypter(block, iv)
 	mode.CryptBlocks(ciphertext[aes.BlockSize:], toEncrypt)
-	ciphertext[len(ciphertext)-1] = TypeCBC
+	ciphertext[len(ciphertext)-1] = TypeAES
 	return ciphertext, nil
 }
 
-func DecryptWithCBC(key, src []byte) ([]byte, error) {
+func DecryptWithAES(key, src []byte) ([]byte, error) {
 	if len(src) < aes.BlockSize {
 		return nil, errors.New("Content to decrypt to short")
 	}

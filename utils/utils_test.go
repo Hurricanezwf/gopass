@@ -5,18 +5,22 @@ import (
 	"testing"
 )
 
-func TestCBCEncrypt(t *testing.T) {
+func TestAESEncrypt(t *testing.T) {
 	key := []byte("zwf")
 	toEncrypt := []byte("hello")
-	ek, err := Encrypt(key, toEncrypt, TypeCBC)
+
+	t.Logf("Before Enc: %v\n", toEncrypt)
+	ek, err := Encrypt(key, toEncrypt, TypeAES)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
+	t.Logf("Enc: %v\n", ek)
 
 	dk, err := Decrypt(key, ek)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
+	t.Logf("Dec: %v\n", dk)
 	if bytes.Equal(toEncrypt, dk) == false {
 		t.Fatalf("origion(%x) != decrypt(%x)", toEncrypt, dk)
 	}

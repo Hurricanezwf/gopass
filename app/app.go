@@ -2,12 +2,12 @@ package app
 
 import (
 	"bytes"
-	"crypto/md5"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 
+	"github.com/Hurricanezwf/gopass/crypt"
 	"github.com/Hurricanezwf/gopass/g"
 	"github.com/Hurricanezwf/gopass/log"
 	"github.com/Hurricanezwf/gopass/meta"
@@ -35,7 +35,7 @@ func Run() {
 			&cli.Command{
 				Name:      g.CMDAdd,
 				Usage:     "add password into gopass",
-				UsageText: "gopass add [key] [password] [-c ConfigFile]",
+				UsageText: "gopass add [-c ConfigFile] [key] [password] ",
 				Action:    AddAction,
 				Flags: []cli.Flag{
 					&cli.PathFlag{Name: "c", Usage: "Specify config file's path", Value: ""},
@@ -45,7 +45,7 @@ func Run() {
 			&cli.Command{
 				Name:      g.CMDDel,
 				Usage:     "delete password from gopass",
-				UsageText: "gopass del [key] [-c ConfigFile]",
+				UsageText: "gopass del [-c ConfigFile] [key]",
 				Action:    DelAction,
 				Flags: []cli.Flag{
 					&cli.PathFlag{Name: "c", Usage: "Specify config file's path", Value: ""},
@@ -55,7 +55,7 @@ func Run() {
 			&cli.Command{
 				Name:      g.CMDUpdate,
 				Usage:     "update password into gopass",
-				UsageText: "gopass update [key] [new_password] [-c ConfigFile]",
+				UsageText: "gopass update [-c ConfigFile] [key] [NewPassword] ",
 				Action:    UpdateAction,
 				Flags: []cli.Flag{
 					&cli.PathFlag{Name: "c", Usage: "Specify config file's path", Value: ""},
@@ -75,7 +75,7 @@ func Run() {
 			&cli.Command{
 				Name:      g.CMDChSK,
 				Usage:     "change auth SecretKey which you provide for authentication when init the app",
-				UsageText: "gopass chsk [newSecretKey] [-c ConfigFile]",
+				UsageText: "gopass chsk [-c ConfigFile]",
 				Action:    ChSKAction,
 				Flags: []cli.Flag{
 					&cli.PathFlag{Name: "c", Usage: "Specify config file's path", Value: ""},
@@ -212,25 +212,24 @@ func GetAction(c *cli.Context) error {
 
 func ChSKAction(c *cli.Context) error {
 	var (
-		err  error
-		args []string
-		sk   []byte
+		err   error
+		sk    []byte
+		newSK []byte
 	)
-
-	if args = c.Args().Slice(); len(args) != 1 {
-		cli.ShowCommandHelp(c, g.CMDChSK)
-		return nil
-	}
 
 	if err = actionInit(c); err != nil {
 		return err
 	}
 
-	if sk, err = auth(); err != nil {
+	if sk, err = auth("Old SecretKey: "); err != nil {
 		return fmt.Errorf("Auth failed, %v", err)
 	}
 
-	if err = password.ChangeSK(sk, []byte(args[0])); err != nil {
+	if newSK, err = inputSKTwice("New SecretKey: ", "Confirm      : "); err != nil {
+		return err
+	}
+
+	if err = password.ChangeSK(sk, newSK); err != nil {
 		return fmt.Errorf("Change failed, Err: %v. Please refer log for more details.", err)
 	}
 	fmt.Printf("\033[32mChange OK\033[0m\n")
@@ -268,11 +267,13 @@ func actionInit(c *cli.Context) error {
 	return nil
 }
 
-func auth() ([]byte, error) {
+// 返回用户输入的SK
+func auth(prompt ...string) ([]byte, error) {
 	var (
-		err        error
-		skReserved []byte
-		skEntered  []byte
+		err          error
+		skReserved   []byte
+		skEntered    []byte
+		skEnteredEnc []byte
 	)
 
 	skReserved, err = password.GetAuthSK()
@@ -280,51 +281,65 @@ func auth() ([]byte, error) {
 		if err != meta.ErrNotExist {
 			return nil, fmt.Errorf("Get auth sk failed, %v", err)
 		}
-		// init the  app
-		var err error
-		var sk1, sk2 []byte
-
-		fmt.Printf("Please init the app when you login firstly.\n\n")
-		fmt.Printf("SecretKey: ")
-		sk1, err = term.GetPasswdMasked()
+		// init the app
+		fmt.Printf("Please init the app when you login firstly.\n")
+		fmt.Printf("Your reserved SecretKey will be used to encrypt your content and provide authentications.\n\n")
+		skEntered, err = inputSKTwice("SecretKey: ", "Confirm  : ")
 		if err != nil {
-			return nil, err
-		}
-		if len(sk1) <= 0 {
-			return nil, fmt.Errorf("Empty SecretKey input")
-		}
-
-		fmt.Printf("Again    : ")
-		sk2, err = term.GetPasswdMasked()
-		if err != nil {
-			return nil, err
-		}
-
-		if bytes.Compare(sk1, sk2) != 0 {
-			return nil, fmt.Errorf("SecretKey didn't equal")
+			return nil, fmt.Errorf("Init auth sk failed, %v", err)
 		}
 
 		// save to db
-		if skReserved, err = password.InitAuthSK(sk1); err != nil {
+		if skReserved, err = password.InitAuthSK(skEntered); err != nil {
 			return nil, fmt.Errorf("Init auth sk failed, %v", err)
 		}
-		skEntered = skReserved
+		skEnteredEnc = skReserved // skReserved is encrypted
 	}
 
 	// enter
 	if len(skEntered) <= 0 {
-		fmt.Printf("SecretKey: ")
-		skEntered, err = term.GetPasswdMasked()
-		if err != nil {
-			return nil, err
+		p := "SecretKey: "
+		if len(prompt) > 0 {
+			p = prompt[0]
 		}
-		skEntered = []byte(fmt.Sprintf("%x", md5.Sum(skEntered)))
+		if skEntered, err = askForSK(p); err != nil {
+			return nil, fmt.Errorf("Ask for sk failed, %v", err)
+		}
+		skEnteredEnc = crypt.EncryptSK(skEntered)
 	}
 
 	// compare
-	if bytes.Compare(skEntered, skReserved) != 0 {
+	if bytes.Compare(skEnteredEnc, skReserved) != 0 {
 		return nil, fmt.Errorf("SecretKey not match")
 	}
 
-	return skReserved, nil
+	return skEntered, nil
+}
+
+func inputSKTwice(firstPrompt, againPrompt string) ([]byte, error) {
+	fmt.Printf(firstPrompt)
+	sk1, err := term.GetPasswdMasked()
+	if err != nil {
+		return nil, err
+	}
+	if len(sk1) <= 0 {
+		return nil, fmt.Errorf("Empty SecretKey input")
+	}
+
+	fmt.Printf(againPrompt)
+	sk2, err := term.GetPasswdMasked()
+	if err != nil {
+		return nil, err
+	}
+
+	if bytes.Compare(sk1, sk2) != 0 {
+		return nil, fmt.Errorf("SecretKey didn't equal")
+	}
+
+	return sk1, nil
+}
+
+func askForSK(prompt string) ([]byte, error) {
+	fmt.Printf(prompt)
+	return term.GetPasswdMasked()
 }
